@@ -11,5 +11,7 @@ public interface MealService {
 
     List<MealResponse> getMeals();
 
+    MealResponse updateMeal(Long id, CreateMealRequest request);
+
     void deleteMeal(Long id);
 }

@@ -49,6 +49,27 @@ public class HabitServiceImpl implements HabitService {
                 .toList();
     }
 
+    @Override
+    public HabitResponse updateHabit(Long id, CreateHabitRequest request) {
+
+        Habit habit = habitRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Habit not found"));
+
+        habit.setWaterMl(request.getWaterMl());
+        habit.setSleepHours(request.getSleepHours());
+        habit.setExerciseMinutes(request.getExerciseMinutes());
+
+        habitRepository.save(habit);
+
+        return map(habit);
+    }
+
+    @Override
+    public void deleteHabit(Long id) {
+
+        habitRepository.deleteById(id);
+    }
+
     private HabitResponse map(Habit h) {
 
         return HabitResponse.builder()

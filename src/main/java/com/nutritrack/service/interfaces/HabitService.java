@@ -10,4 +10,8 @@ public interface HabitService {
     HabitResponse createHabit(CreateHabitRequest request);
 
     List<HabitResponse> getHabits();
+
+    HabitResponse updateHabit(Long id, CreateHabitRequest request);
+
+    void deleteHabit(Long id);
 }

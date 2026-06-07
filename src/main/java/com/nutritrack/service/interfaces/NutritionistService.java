@@ -12,4 +12,10 @@ public interface NutritionistService {
     NutritionistProfileDTO updateProfile(NutritionistProfileDTO dto);
 
     List<UserResponse> getPatients();
+
+    List<?> getPatientMeals(Long patientId);
+
+    List<?> getPatientHabits(Long patientId);
+
+    List<?> getPatientGoals(Long patientId);
 }

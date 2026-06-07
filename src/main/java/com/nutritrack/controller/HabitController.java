@@ -43,4 +43,35 @@ public class HabitController {
                         .build()
         );
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<HabitResponse>> updateHabit(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateHabitRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponse.<HabitResponse>builder()
+                        .success(true)
+                        .message("Habit updated successfully")
+                        .data(habitService.updateHabit(id, request))
+                        .build()
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<String>> deleteHabit(
+            @PathVariable Long id
+    ) {
+
+        habitService.deleteHabit(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.<String>builder()
+                        .success(true)
+                        .message("Habit deleted successfully")
+                        .data("Deleted")
+                        .build()
+        );
+    }
 }

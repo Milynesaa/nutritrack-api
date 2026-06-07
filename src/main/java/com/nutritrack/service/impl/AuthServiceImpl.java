@@ -5,6 +5,8 @@ import com.nutritrack.dto.auth.*;
 import com.nutritrack.entity.PasswordResetToken;
 import com.nutritrack.entity.RefreshToken;
 import com.nutritrack.entity.User;
+import com.nutritrack.entity.enums.Role;
+import com.nutritrack.entity.enums.UserStatus;
 import com.nutritrack.repository.PasswordResetTokenRepository;
 import com.nutritrack.repository.RefreshTokenRepository;
 import com.nutritrack.repository.UserRepository;
@@ -40,11 +42,17 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse register(RegisterRequest request) {
         log.info("Registering new user with email: {}", request.getEmail());
 
+        // Nutritionists start as PENDING, Patients as ACTIVE
+        UserStatus status = request.getRole() == Role.ROLE_NUTRITIONIST
+            ? UserStatus.PENDING
+            : UserStatus.ACTIVE;
+
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
+                .status(status)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -87,6 +95,17 @@ public class AuthServiceImpl implements AuthService {
                     log.error("User not found with email: {}", request.getEmail());
                     return new RuntimeException("User not found");
                 });
+
+        // Check user status - prevent PENDING and REJECTED users from logging in
+        if (user.getStatus() == UserStatus.PENDING) {
+            log.warn("Pending nutritionist attempted login: {}", user.getEmail());
+            throw new RuntimeException("Account pending approval. Please wait for administrator approval.");
+        }
+
+        if (user.getStatus() == UserStatus.REJECTED) {
+            log.warn("Rejected nutritionist attempted login: {}", user.getEmail());
+            throw new RuntimeException("Account rejected. Please contact support.");
+        }
 
         String token = jwtService.generateToken(
                 new org.springframework.security.core.userdetails.User(

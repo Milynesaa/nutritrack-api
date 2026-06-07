@@ -54,4 +54,46 @@ public class NutritionistController {
                         .build()
         );
     }
+
+    @GetMapping("/patients/{patientId}/meals")
+    public ResponseEntity<ApiResponse<List<Object>>> getPatientMeals(
+            @PathVariable Long patientId
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponse.<List<Object>>builder()
+                        .success(true)
+                        .message("Patient meals fetched successfully")
+                        .data((List<Object>) nutritionistService.getPatientMeals(patientId))
+                        .build()
+        );
+    }
+
+    @GetMapping("/patients/{patientId}/habits")
+    public ResponseEntity<ApiResponse<List<Object>>> getPatientHabits(
+            @PathVariable Long patientId
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponse.<List<Object>>builder()
+                        .success(true)
+                        .message("Patient habits fetched successfully")
+                        .data((List<Object>) nutritionistService.getPatientHabits(patientId))
+                        .build()
+        );
+    }
+
+    @GetMapping("/patients/{patientId}/goals")
+    public ResponseEntity<ApiResponse<List<Object>>> getPatientGoals(
+            @PathVariable Long patientId
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponse.<List<Object>>builder()
+                        .success(true)
+                        .message("Patient goals fetched successfully")
+                        .data((List<Object>) nutritionistService.getPatientGoals(patientId))
+                        .build()
+        );
+    }
 }

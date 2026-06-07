@@ -44,6 +44,21 @@ public class MealController {
         );
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<MealResponse>> updateMeal(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateMealRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponse.<MealResponse>builder()
+                        .success(true)
+                        .message("Meal updated successfully")
+                        .data(mealService.updateMeal(id, request))
+                        .build()
+        );
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> deleteMeal(
             @PathVariable Long id

@@ -51,6 +51,22 @@ public class MealServiceImpl implements MealService {
     }
 
     @Override
+    public MealResponse updateMeal(Long id, CreateMealRequest request) {
+
+        Meal meal = mealRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Meal not found"));
+
+        meal.setTitle(request.getTitle());
+        meal.setDescription(request.getDescription());
+        meal.setCalories(request.getCalories());
+        meal.setType(request.getType());
+
+        mealRepository.save(meal);
+
+        return map(meal);
+    }
+
+    @Override
     public void deleteMeal(Long id) {
 
         mealRepository.deleteById(id);

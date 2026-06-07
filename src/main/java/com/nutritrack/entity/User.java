@@ -1,6 +1,7 @@
 package com.nutritrack.entity;
 
 import com.nutritrack.entity.enums.Role;
+import com.nutritrack.entity.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,6 +30,9 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
 
     private LocalDateTime createdAt;
 

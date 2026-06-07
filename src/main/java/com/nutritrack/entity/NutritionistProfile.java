@@ -20,6 +20,9 @@ public class NutritionistProfile {
     @Column(length = 2000)
     private String description;
 
+    @Column(unique = true)
+    private String licenseNumber;
+
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
