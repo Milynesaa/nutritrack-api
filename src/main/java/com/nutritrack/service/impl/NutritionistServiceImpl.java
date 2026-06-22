@@ -52,6 +52,19 @@ public class NutritionistServiceImpl implements NutritionistService {
     }
 
     @Override
+    public UserResponse getPatientDetails(Long patientId) {
+        User nutritionist = getCurrentNutritionist();
+        User patient = userRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + patientId));
+
+        // Ensure the nutritionist is assigned to this patient
+        patientNutritionistRepository.findByNutritionistAndPatient(nutritionist, patient)
+                .orElseThrow(() -> new RuntimeException("Nutritionist is not assigned to patient with ID: " + patientId));
+
+        return mapToUserResponse(patient);
+    }
+
+    @Override
     public List<?> getPatientMeals(Long patientId) {
         User patient = userRepository.findById(patientId)
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
