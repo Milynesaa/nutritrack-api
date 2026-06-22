@@ -21,9 +21,9 @@ public class OpenApiConfig {
 
         final String securitySchemeName = "bearerAuth";
 
-        Server localServer = new Server();
-        localServer.setUrl("http://localhost:8080");
-        localServer.setDescription("Local Development Server");
+        Server productionServer = new Server();
+        productionServer.setUrl("https://nutritrack-api-production-2d5b.up.railway.app");
+        productionServer.setDescription("Production Server on Railway");
 
         return new OpenAPI()
 
@@ -47,7 +47,7 @@ public class OpenApiConfig {
                                                 .url("https://opensource.org/licenses/MIT")
                                 )
                 )
-                .servers(List.of(localServer))
+                .servers(List.of(productionServer))
                 .addSecurityItem(
                         new SecurityRequirement()
                                 .addList(securitySchemeName)

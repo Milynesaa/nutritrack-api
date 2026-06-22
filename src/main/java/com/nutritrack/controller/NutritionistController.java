@@ -55,6 +55,19 @@ public class NutritionistController {
         );
     }
 
+    @GetMapping("/patients/{patientId}")
+    public ResponseEntity<ApiResponse<UserResponse>> getPatientDetails(
+            @PathVariable Long patientId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.<UserResponse>builder()
+                        .success(true)
+                        .message("Patient details fetched successfully")
+                        .data(nutritionistService.getPatientDetails(patientId))
+                        .build()
+        );
+    }
+
     @GetMapping("/patients/{patientId}/meals")
     public ResponseEntity<ApiResponse<List<Object>>> getPatientMeals(
             @PathVariable Long patientId
