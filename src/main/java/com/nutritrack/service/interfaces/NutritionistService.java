@@ -1,5 +1,8 @@
 package com.nutritrack.service.interfaces;
 
+import com.nutritrack.dto.goal.GoalResponse;     // Import added
+import com.nutritrack.dto.habit.HabitResponse;   // Import added
+import com.nutritrack.dto.meal.MealResponse;     // Import added
 import com.nutritrack.dto.user.NutritionistProfileDTO;
 import com.nutritrack.dto.user.UserResponse;
 
@@ -13,11 +16,9 @@ public interface NutritionistService {
 
     List<UserResponse> getPatients();
 
-    UserResponse getPatientDetails(Long patientId); // Added this method
+    UserResponse getPatientDetails(Long patientId);
 
-    List<?> getPatientMeals(Long patientId);
-
-    List<?> getPatientHabits(Long patientId);
-
-    List<?> getPatientGoals(Long patientId);
+    List<MealResponse> getPatientMeals(Long patientId);   // Changed return type
+    List<HabitResponse> getPatientHabits(Long patientId); // Changed return type
+    List<GoalResponse> getPatientGoals(Long patientId);   // Changed return type
 }

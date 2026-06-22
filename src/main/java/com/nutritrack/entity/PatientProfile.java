@@ -1,5 +1,7 @@
 package com.nutritrack.entity;
 
+import com.nutritrack.entity.enums.ActivityLevel; // Import added
+import com.nutritrack.entity.enums.Gender;       // Import added
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,7 +25,13 @@ public class PatientProfile {
 
     private String goal;
 
+    @Enumerated(EnumType.STRING) // Added for Gender enum
+    private Gender gender;
+
+    @Enumerated(EnumType.STRING) // Added for ActivityLevel enum
+    private ActivityLevel activityLevel;
+
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 }

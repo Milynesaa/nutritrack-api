@@ -6,11 +6,11 @@ Sistema de seguimiento nutricional con IA, autenticación JWT y gestión de paci
 
 - Java 21
 - Spring Boot 4.0.6
-- Spring Security + JWT
+- Spring Security + JWT (con rotación de Refresh Tokens)
 - PostgreSQL
-- Spring AI (Anthropic, DeepSeek, OpenAI)
+- Spring AI (Anthropic, DeepSeek, OpenAI, HuggingFace)
 - Maven
-- Lombok
+- Lombok (@Slf4j para logging)
 - Swagger/OpenAPI
 
 ## 📋 Requisitos Previos
@@ -50,6 +50,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=tu_email@gmail.com
 SMTP_PASSWORD=tu_app_password
+FRONTEND_RESET_PASSWORD_URL=http://localhost:3000/reset-password
 DDL_AUTO=update
 ```
 
@@ -147,16 +148,19 @@ DDL_AUTO=validate
 | SMTP_PORT | Puerto SMTP | `587` |
 | SMTP_USERNAME | Email para envío | `email@gmail.com` |
 | SMTP_PASSWORD | App Password de Gmail | `abcd efgh ijkl mnop` |
+| FRONTEND_RESET_PASSWORD_URL | URL del frontend para resetear password | `http://localhost:3000/reset-password` |
 | DDL_AUTO | Estrategia de DDL | `update` (dev) / `validate` (prod) |
 
 ## 🔐 Seguridad
 
 - JWT con expiración configurable
-- Refresh tokens con rotación segura
+- **Refresh tokens con rotación segura** - Tokens antiguos se invalidan al crear uno nuevo
+- **Generación de tokens mejorada** - Usa SecureRandom con 256 bits de entropía
 - Password encoding con BCrypt
-- Protección de endpoints por roles (PATIENT, NUTRITIONIST)
+- Protección de endpoints por roles (PATIENT, NUTRITIONIST, ADMIN)
 - CORS configurado
 - Validación de inputs
+- Manejo de excepciones específicas (ResourceNotFoundException, UnauthorizedException, EmailServiceException)
 
 ## 📊 Logs
 
@@ -165,6 +169,7 @@ Los logs están configurados para:
 - File logging en producción
 - Niveles configurables por paquete
 - Formato estructurado
+- **Usando @Slf4j de Lombok** (reemplazó LogUtil)
 
 ## 🧪 Testing
 

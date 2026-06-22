@@ -1,5 +1,8 @@
 package com.nutritrack.controller;
 
+import com.nutritrack.dto.goal.GoalResponse;     // Import added
+import com.nutritrack.dto.habit.HabitResponse;   // Import added
+import com.nutritrack.dto.meal.MealResponse;     // Import added
 import com.nutritrack.dto.response.ApiResponse;
 import com.nutritrack.dto.user.NutritionistProfileDTO;
 import com.nutritrack.dto.user.UserResponse;
@@ -69,43 +72,43 @@ public class NutritionistController {
     }
 
     @GetMapping("/patients/{patientId}/meals")
-    public ResponseEntity<ApiResponse<List<Object>>> getPatientMeals(
+    public ResponseEntity<ApiResponse<List<MealResponse>>> getPatientMeals( // Changed return type
             @PathVariable Long patientId
     ) {
 
         return ResponseEntity.ok(
-                ApiResponse.<List<Object>>builder()
+                ApiResponse.<List<MealResponse>>builder() // Changed return type
                         .success(true)
                         .message("Patient meals fetched successfully")
-                        .data((List<Object>) nutritionistService.getPatientMeals(patientId))
+                        .data(nutritionistService.getPatientMeals(patientId)) // Removed casting
                         .build()
         );
     }
 
     @GetMapping("/patients/{patientId}/habits")
-    public ResponseEntity<ApiResponse<List<Object>>> getPatientHabits(
+    public ResponseEntity<ApiResponse<List<HabitResponse>>> getPatientHabits( // Changed return type
             @PathVariable Long patientId
     ) {
 
         return ResponseEntity.ok(
-                ApiResponse.<List<Object>>builder()
+                ApiResponse.<List<HabitResponse>>builder() // Changed return type
                         .success(true)
                         .message("Patient habits fetched successfully")
-                        .data((List<Object>) nutritionistService.getPatientHabits(patientId))
+                        .data(nutritionistService.getPatientHabits(patientId)) // Removed casting
                         .build()
         );
     }
 
     @GetMapping("/patients/{patientId}/goals")
-    public ResponseEntity<ApiResponse<List<Object>>> getPatientGoals(
+    public ResponseEntity<ApiResponse<List<GoalResponse>>> getPatientGoals( // Changed return type
             @PathVariable Long patientId
     ) {
 
         return ResponseEntity.ok(
-                ApiResponse.<List<Object>>builder()
+                ApiResponse.<List<GoalResponse>>builder() // Changed return type
                         .success(true)
                         .message("Patient goals fetched successfully")
-                        .data((List<Object>) nutritionistService.getPatientGoals(patientId))
+                        .data(nutritionistService.getPatientGoals(patientId)) // Removed casting
                         .build()
         );
     }

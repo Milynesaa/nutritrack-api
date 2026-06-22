@@ -42,9 +42,29 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private NutritionistProfile nutritionistProfile;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) // Added cascade and orphanRemoval
     private List<Meal> meals;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) // Added cascade and orphanRemoval
     private List<Habit> habits;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) // Added for Goal
+    private List<Goal> goals;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) // Added for AIChatHistory
+    private List<AIChatHistory> chatHistories;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RefreshToken> refreshTokens;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PasswordResetToken> passwordResetTokens;
+
+    // When this user is a patient, these are their associated nutritionists
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PatientNutritionist> patientNutritionists;
+
+    // When this user is a nutritionist, these are their associated patients
+    @OneToMany(mappedBy = "nutritionist", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PatientNutritionist> nutritionistPatients;
 }

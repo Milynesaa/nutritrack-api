@@ -5,18 +5,20 @@ import com.nutritrack.dto.auth.AuthResponse;
 import com.nutritrack.dto.auth.RefreshTokenRequest;
 import com.nutritrack.entity.RefreshToken;
 import com.nutritrack.entity.User;
+import com.nutritrack.exception.UnauthorizedException;
 import com.nutritrack.repository.RefreshTokenRepository;
 import com.nutritrack.repository.UserRepository;
 import com.nutritrack.service.interfaces.RefreshTokenService;
-import com.nutritrack.util.LogUtil;
+import com.nutritrack.util.TokenGenerator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenServiceImpl implements RefreshTokenService {
@@ -28,8 +30,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Value("${jwt.refresh-expiration:604800000}")
     private Long refreshExpiration;
 
-    private static final org.slf4j.Logger log = LogUtil.getLogger(RefreshTokenServiceImpl.class);
-
     @Override
     @Transactional
     public AuthResponse refreshToken(RefreshTokenRequest request) {
@@ -38,13 +38,13 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(request.getRefreshToken())
                 .orElseThrow(() -> {
                     log.error("Invalid refresh token");
-                    return new RuntimeException("Invalid refresh token");
+                    return new UnauthorizedException("Invalid refresh token");
                 });
 
         if (refreshToken.getExpiryDate().compareTo(Instant.now()) < 0) {
             log.error("Refresh token expired for user: {}", refreshToken.getUser().getEmail());
             refreshTokenRepository.delete(refreshToken);
-            throw new RuntimeException("Refresh token expired");
+            throw new UnauthorizedException("Refresh token expired");
         }
 
         User user = refreshToken.getUser();
@@ -78,14 +78,17 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     private String createRefreshToken(User user) {
+        // Invalidate existing refresh tokens for the user
+        refreshTokenRepository.deleteByUser(user);
+        
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
-        refreshToken.setToken(UUID.randomUUID().toString());
+        refreshToken.setToken(TokenGenerator.generateToken());
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshExpiration));
         
         refreshTokenRepository.save(refreshToken);
         
-        log.info("New refresh token created for user: {}", user.getEmail());
+        log.info("New refresh token created for user: {} (previous tokens invalidated)", user.getEmail());
         return refreshToken.getToken();
     }
 }

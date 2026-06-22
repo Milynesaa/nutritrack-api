@@ -3,16 +3,19 @@ package com.nutritrack.service.impl;
 import com.nutritrack.dto.admin.AdminStatsResponse;
 import com.nutritrack.dto.admin.ApproveNutritionistRequest;
 import com.nutritrack.dto.admin.UpdateNutritionistRequest;
+import com.nutritrack.dto.response.PageResponse;
 import com.nutritrack.dto.user.UserResponse;
 import com.nutritrack.entity.Goal;
 import com.nutritrack.entity.PatientNutritionist;
 import com.nutritrack.entity.User;
 import com.nutritrack.entity.enums.Role;
 import com.nutritrack.entity.enums.UserStatus;
+import com.nutritrack.exception.ResourceNotFoundException;
 import com.nutritrack.repository.GoalRepository;
 import com.nutritrack.repository.PatientNutritionistRepository;
 import com.nutritrack.repository.UserRepository;
 import com.nutritrack.service.interfaces.AdminService;
+import com.nutritrack.util.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,21 +29,57 @@ public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final PatientNutritionistRepository patientNutritionistRepository;
     private final GoalRepository goalRepository;
+    private final UserMapper userMapper; // Inject UserMapper
 
     @Override
-    public List<UserResponse> getPendingNutritionists() {
-
-        return userRepository.findByRoleAndStatus(Role.ROLE_NUTRITIONIST, UserStatus.PENDING)
+    public PageResponse<UserResponse> getPendingNutritionists(int page, int size) {
+        long totalPending = userRepository.countByRoleAndStatus(Role.ROLE_NUTRITIONIST, UserStatus.PENDING);
+        
+        List<UserResponse> content = userRepository.findByRoleAndStatus(Role.ROLE_NUTRITIONIST, UserStatus.PENDING)
                 .stream()
-                .map(this::mapToResponse)
-                .toList();
+                .skip((long) page * size)
+                .limit(size)
+                .map(userMapper::mapToUserResponse)
+                .collect(Collectors.toList());
+
+        return PageResponse.<UserResponse>builder()
+                .content(content)
+                .pageNumber(page)
+                .pageSize(size)
+                .totalElements(totalPending)
+                .totalPages((int) Math.ceil((double) totalPending / size))
+                .isFirst(page == 0)
+                .isLast(page >= Math.ceil((double) totalPending / size) - 1)
+                .build();
+    }
+
+    @Override
+    public PageResponse<UserResponse> getAllNutritionists(int page, int size) {
+        long totalNutritionists = userRepository.countByRole(Role.ROLE_NUTRITIONIST);
+
+        List<UserResponse> content = userRepository.findByRole(Role.ROLE_NUTRITIONIST)
+                .stream()
+                .skip((long) page * size)
+                .limit(size)
+                .map(userMapper::mapToUserResponse)
+                .collect(Collectors.toList());
+
+        return PageResponse.<UserResponse>builder()
+                .content(content)
+                .pageNumber(page)
+                .pageSize(size)
+                .totalElements(totalNutritionists)
+                .totalPages((int) Math.ceil((double) totalNutritionists / size))
+                .isFirst(page == 0)
+                .isLast(page >= Math.ceil((double) totalNutritionists / size) - 1)
+                .build();
     }
 
     @Override
     public UserResponse approveNutritionist(ApproveNutritionistRequest request) {
 
         User nutritionist = userRepository.findById(request.getNutritionistId())
-                .orElseThrow(() -> new RuntimeException("Nutritionist not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Nutritionist not found with ID: " + request.getNutritionistId()));
 
         if (request.getApproved()) {
             nutritionist.setStatus(UserStatus.APPROVED);
@@ -50,16 +89,7 @@ public class AdminServiceImpl implements AdminService {
 
         userRepository.save(nutritionist);
 
-        return mapToResponse(nutritionist);
-    }
-
-    @Override
-    public List<UserResponse> getAllNutritionists() {
-
-        return userRepository.findByRole(Role.ROLE_NUTRITIONIST)
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        return userMapper.mapToUserResponse(nutritionist);
     }
 
     @Override
@@ -90,22 +120,22 @@ public class AdminServiceImpl implements AdminService {
     public UserResponse updateNutritionist(UpdateNutritionistRequest request) {
 
         User nutritionist = userRepository.findById(request.getNutritionistId())
-                .orElseThrow(() -> new RuntimeException("Nutritionist not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Nutritionist not found with ID: " + request.getNutritionistId()));
 
         nutritionist.setName(request.getName());
         userRepository.save(nutritionist);
 
-        return mapToResponse(nutritionist);
+        return userMapper.mapToUserResponse(nutritionist);
     }
 
     @Override
     public void deleteNutritionist(Long nutritionistId) {
 
         User nutritionist = userRepository.findById(nutritionistId)
-                .orElseThrow(() -> new RuntimeException("Nutritionist not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Nutritionist not found with ID: " + nutritionistId));
 
         if (nutritionist.getRole() != Role.ROLE_NUTRITIONIST) {
-            throw new RuntimeException("User is not a nutritionist");
+            throw new ResourceNotFoundException("User is not a nutritionist");
         }
 
         userRepository.delete(nutritionist);
@@ -144,18 +174,6 @@ public class AdminServiceImpl implements AdminService {
                 .patientCount(patientCount)
                 .efficiencyPercentage(efficiency)
                 .status(nutritionist.getStatus().name())
-                .build();
-    }
-
-    private UserResponse mapToResponse(User user) {
-
-        return UserResponse.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .status(user.getStatus())
-                .createdAt(user.getCreatedAt())
                 .build();
     }
 }

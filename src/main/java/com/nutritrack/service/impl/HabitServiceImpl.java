@@ -5,10 +5,12 @@ import com.nutritrack.entity.Habit;
 import com.nutritrack.entity.User;
 import com.nutritrack.repository.HabitRepository;
 import com.nutritrack.repository.UserRepository;
+import com.nutritrack.service.CurrentUserService; // Import CurrentUserService
 import com.nutritrack.service.interfaces.HabitService;
+import com.nutritrack.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextHolder; // Keep for now, might be removed later
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,12 +20,13 @@ import java.util.List;
 public class HabitServiceImpl implements HabitService {
 
     private final HabitRepository habitRepository;
-    private final UserRepository userRepository;
+    private final UserRepository userRepository; // Keep for now, might be removed if not used elsewhere
+    private final CurrentUserService currentUserService; // Inject CurrentUserService
 
     @Override
     public HabitResponse createHabit(CreateHabitRequest request) {
 
-        User user = getUser();
+        User user = currentUserService.getCurrentUser(); // Use CurrentUserService
 
         Habit habit = Habit.builder()
                 .waterMl(request.getWaterMl())
@@ -41,7 +44,7 @@ public class HabitServiceImpl implements HabitService {
     @Override
     public List<HabitResponse> getHabits() {
 
-        User user = getUser();
+        User user = currentUserService.getCurrentUser(); // Use CurrentUserService
 
         return habitRepository.findByUser(user)
                 .stream()
@@ -51,9 +54,15 @@ public class HabitServiceImpl implements HabitService {
 
     @Override
     public HabitResponse updateHabit(Long id, CreateHabitRequest request) {
+        User currentUser = currentUserService.getCurrentUser(); // Use CurrentUserService
 
         Habit habit = habitRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Habit not found"));
+
+        // Check ownership
+        if (!habit.getUser().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("You are not authorized to update this habit.");
+        }
 
         habit.setWaterMl(request.getWaterMl());
         habit.setSleepHours(request.getSleepHours());
@@ -66,6 +75,15 @@ public class HabitServiceImpl implements HabitService {
 
     @Override
     public void deleteHabit(Long id) {
+        User currentUser = currentUserService.getCurrentUser(); // Use CurrentUserService
+
+        Habit habit = habitRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Habit not found"));
+
+        // Check ownership
+        if (!habit.getUser().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("You are not authorized to delete this habit.");
+        }
 
         habitRepository.deleteById(id);
     }
@@ -79,15 +97,5 @@ public class HabitServiceImpl implements HabitService {
                 .exerciseMinutes(h.getExerciseMinutes())
                 .date(h.getDate())
                 .build();
-    }
-
-    private User getUser() {
-
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

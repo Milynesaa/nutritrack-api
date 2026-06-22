@@ -7,23 +7,28 @@ import com.nutritrack.entity.RefreshToken;
 import com.nutritrack.entity.User;
 import com.nutritrack.entity.enums.Role;
 import com.nutritrack.entity.enums.UserStatus;
+import com.nutritrack.exception.ResourceNotFoundException;
+import com.nutritrack.exception.UnauthorizedException;
 import com.nutritrack.repository.PasswordResetTokenRepository;
 import com.nutritrack.repository.RefreshTokenRepository;
 import com.nutritrack.repository.UserRepository;
 import com.nutritrack.service.interfaces.AuthService;
 import com.nutritrack.service.interfaces.EmailService;
-import com.nutritrack.util.LogUtil;
 import com.nutritrack.util.TokenGenerator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -35,8 +40,6 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
     private final RefreshTokenRepository refreshTokenRepository;
-
-    private static final org.slf4j.Logger log = LogUtil.getLogger(AuthServiceImpl.class);
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -62,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
                 new org.springframework.security.core.userdetails.User(
                         user.getEmail(),
                         user.getPassword(),
-                        java.util.List.of()
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
                 )
         );
 
@@ -93,25 +96,25 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> {
                     log.error("User not found with email: {}", request.getEmail());
-                    return new RuntimeException("User not found");
+                    return new ResourceNotFoundException("User not found"); // Changed to ResourceNotFoundException
                 });
 
         // Check user status - prevent PENDING and REJECTED users from logging in
         if (user.getStatus() == UserStatus.PENDING) {
             log.warn("Pending nutritionist attempted login: {}", user.getEmail());
-            throw new RuntimeException("Account pending approval. Please wait for administrator approval.");
+            throw new UnauthorizedException("Account pending approval. Please wait for administrator approval."); // Changed to UnauthorizedException
         }
 
         if (user.getStatus() == UserStatus.REJECTED) {
             log.warn("Rejected nutritionist attempted login: {}", user.getEmail());
-            throw new RuntimeException("Account rejected. Please contact support.");
+            throw new UnauthorizedException("Account rejected. Please contact support."); // Changed to UnauthorizedException
         }
 
         String token = jwtService.generateToken(
                 new org.springframework.security.core.userdetails.User(
                         user.getEmail(),
                         user.getPassword(),
-                        java.util.List.of()
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
                 )
         );
 
@@ -135,7 +138,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> {
                     log.error("User not found with email: {}", request.getEmail());
-                    return new RuntimeException("User not found");
+                    return new ResourceNotFoundException("User not found"); // Changed to ResourceNotFoundException
                 });
 
         String token = TokenGenerator.generateToken();
@@ -164,12 +167,12 @@ public class AuthServiceImpl implements AuthService {
                 .findByToken(request.getToken())
                 .orElseThrow(() -> {
                     log.error("Invalid reset token");
-                    return new RuntimeException("Invalid token");
+                    return new UnauthorizedException("Invalid token"); // Changed to UnauthorizedException
                 });
 
         if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
             log.error("Reset token expired");
-            throw new RuntimeException("Token expired");
+            throw new UnauthorizedException("Token expired"); // Changed to UnauthorizedException
         }
 
         User user = token.getUser();
@@ -184,6 +187,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private String createRefreshToken(User user) {
+        // Invalidate existing refresh tokens for the user
+        refreshTokenRepository.deleteByUser(user);
+
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setToken(UUID.randomUUID().toString());

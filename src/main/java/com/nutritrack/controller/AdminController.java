@@ -4,14 +4,13 @@ import com.nutritrack.dto.admin.AdminStatsResponse;
 import com.nutritrack.dto.admin.ApproveNutritionistRequest;
 import com.nutritrack.dto.admin.UpdateNutritionistRequest;
 import com.nutritrack.dto.response.ApiResponse;
+import com.nutritrack.dto.response.PageResponse;
 import com.nutritrack.dto.user.UserResponse;
 import com.nutritrack.service.interfaces.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -35,13 +34,16 @@ public class AdminController {
 
     @GetMapping("/nutritionists/pending")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<UserResponse>>> getPendingNutritionists() {
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getPendingNutritionists(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
 
         return ResponseEntity.ok(
-                ApiResponse.<List<UserResponse>>builder()
+                ApiResponse.<PageResponse<UserResponse>>builder()
                         .success(true)
                         .message("Pending nutritionists retrieved successfully")
-                        .data(adminService.getPendingNutritionists())
+                        .data(adminService.getPendingNutritionists(page, size))
                         .build()
         );
     }
@@ -63,13 +65,16 @@ public class AdminController {
 
     @GetMapping("/nutritionists")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllNutritionists() {
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getAllNutritionists(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
 
         return ResponseEntity.ok(
-                ApiResponse.<List<UserResponse>>builder()
+                ApiResponse.<PageResponse<UserResponse>>builder()
                         .success(true)
                         .message("All nutritionists retrieved successfully")
-                        .data(adminService.getAllNutritionists())
+                        .data(adminService.getAllNutritionists(page, size))
                         .build()
         );
     }

@@ -407,8 +407,11 @@ Todas las respuestas siguen este formato:
 ```
 
 ### 2. Obtener Nutricionistas Pendientes
-- **GET** `/api/admin/nutritionists/pending`
-- **Respuesta:** Array de UserResponse (nutricionistas con status PENDING)
+- **GET** `/api/admin/nutritionists/pending?page=0&size=10`
+- **Query Parameters:**
+  - `page` (default: 0) - Número de página
+  - `size` (default: 10) - Elementos por página
+- **Respuesta:** PageResponse con array de UserResponse (nutricionistas con status PENDING)
 
 ### 3. Aprobar/Rechazar Nutricionista
 - **POST** `/api/admin/nutritionists/approve`
@@ -422,8 +425,11 @@ Todas las respuestas siguen este formato:
 - **Respuesta:** UserResponse actualizado
 
 ### 4. Obtener Todos los Nutricionistas
-- **GET** `/api/admin/nutritionists`
-- **Respuesta:** Array de UserResponse
+- **GET** `/api/admin/nutritionists?page=0&size=10`
+- **Query Parameters:**
+  - `page` (default: 0) - Número de página
+  - `size` (default: 10) - Elementos por página
+- **Respuesta:** PageResponse con array de UserResponse
 
 ### 5. Actualizar Nutricionista
 - **PUT** `/api/admin/nutritionists`

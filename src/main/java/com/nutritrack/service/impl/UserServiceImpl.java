@@ -4,6 +4,7 @@ import com.nutritrack.dto.user.UserResponse;
 import com.nutritrack.entity.User;
 import com.nutritrack.repository.UserRepository;
 import com.nutritrack.service.interfaces.UserService;
+import com.nutritrack.util.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     public UserResponse getCurrentUser() {
@@ -25,11 +27,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return UserResponse.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .build();
+        return userMapper.mapToUserResponse(user);
     }
 }

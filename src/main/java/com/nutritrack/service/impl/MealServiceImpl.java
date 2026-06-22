@@ -5,9 +5,11 @@ import com.nutritrack.entity.Meal;
 import com.nutritrack.entity.User;
 import com.nutritrack.repository.MealRepository;
 import com.nutritrack.repository.UserRepository;
+import com.nutritrack.service.CurrentUserService; // Import CurrentUserService
 import com.nutritrack.service.interfaces.MealService;
+import com.nutritrack.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextHolder; // Keep for now, might be removed later
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -18,12 +20,13 @@ import java.util.List;
 public class MealServiceImpl implements MealService {
 
     private final MealRepository mealRepository;
-    private final UserRepository userRepository;
+    private final UserRepository userRepository; // Keep for now, might be removed if not used elsewhere
+    private final CurrentUserService currentUserService; // Inject CurrentUserService
 
     @Override
     public MealResponse createMeal(CreateMealRequest request) {
 
-        User user = getUser();
+        User user = currentUserService.getCurrentUser(); // Use CurrentUserService
 
         Meal meal = Meal.builder()
                 .title(request.getTitle())
@@ -42,7 +45,7 @@ public class MealServiceImpl implements MealService {
     @Override
     public List<MealResponse> getMeals() {
 
-        User user = getUser();
+        User user = currentUserService.getCurrentUser(); // Use CurrentUserService
 
         return mealRepository.findByUser(user)
                 .stream()
@@ -52,9 +55,15 @@ public class MealServiceImpl implements MealService {
 
     @Override
     public MealResponse updateMeal(Long id, CreateMealRequest request) {
+        User currentUser = currentUserService.getCurrentUser(); // Use CurrentUserService
 
         Meal meal = mealRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Meal not found"));
+
+        // Check ownership
+        if (!meal.getUser().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("You are not authorized to update this meal.");
+        }
 
         meal.setTitle(request.getTitle());
         meal.setDescription(request.getDescription());
@@ -68,6 +77,15 @@ public class MealServiceImpl implements MealService {
 
     @Override
     public void deleteMeal(Long id) {
+        User currentUser = currentUserService.getCurrentUser(); // Use CurrentUserService
+
+        Meal meal = mealRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Meal not found"));
+
+        // Check ownership
+        if (!meal.getUser().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("You are not authorized to delete this meal.");
+        }
 
         mealRepository.deleteById(id);
     }
@@ -82,15 +100,5 @@ public class MealServiceImpl implements MealService {
                 .type(meal.getType())
                 .createdAt(meal.getCreatedAt())
                 .build();
-    }
-
-    private User getUser() {
-
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

@@ -1,7 +1,7 @@
 package com.nutritrack.exception;
 
 import com.nutritrack.dto.response.ErrorResponse;
-import com.nutritrack.util.LogUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -10,26 +10,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    private static final org.slf4j.Logger log = LogUtil.getLogger(GlobalExceptionHandler.class);
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handle(Exception ex) {
-        log.error("Unexpected error occurred", ex);
-
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(
-                        ErrorResponse.builder()
-                                .success(false)
-                                .message("An unexpected error occurred")
-                                .status(500)
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
-    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
@@ -58,6 +41,22 @@ public class GlobalExceptionHandler {
                                 .success(false)
                                 .message(ex.getMessage())
                                 .status(401)
+                                .timestamp(LocalDateTime.now())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler(EmailServiceException.class)
+    public ResponseEntity<ErrorResponse> handleEmailServiceException(EmailServiceException ex) {
+        log.error("Email service error: {}", ex.getMessage(), ex);
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(
+                        ErrorResponse.builder()
+                                .success(false)
+                                .message("Failed to send email. Please try again later.")
+                                .status(500)
                                 .timestamp(LocalDateTime.now())
                                 .build()
                 );
@@ -106,6 +105,22 @@ public class GlobalExceptionHandler {
                                 .success(false)
                                 .message(ex.getMessage())
                                 .status(400)
+                                .timestamp(LocalDateTime.now())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handle(Exception ex) {
+        log.error("Unexpected error occurred", ex);
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(
+                        ErrorResponse.builder()
+                                .success(false)
+                                .message("An unexpected error occurred")
+                                .status(500)
                                 .timestamp(LocalDateTime.now())
                                 .build()
                 );

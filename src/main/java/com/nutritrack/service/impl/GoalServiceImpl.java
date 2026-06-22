@@ -6,10 +6,13 @@ import com.nutritrack.entity.Goal;
 import com.nutritrack.entity.User;
 import com.nutritrack.repository.GoalRepository;
 import com.nutritrack.repository.UserRepository;
+import com.nutritrack.service.CurrentUserService; // Import CurrentUserService
 import com.nutritrack.service.interfaces.GoalService;
+import com.nutritrack.exception.ResourceNotFoundException;
+import com.nutritrack.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextHolder; // Keep for now, might be removed later
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,12 +22,13 @@ import java.util.List;
 public class GoalServiceImpl implements GoalService {
 
     private final GoalRepository goalRepository;
-    private final UserRepository userRepository;
+    private final UserRepository userRepository; // Keep for now, might be removed if not used elsewhere
+    private final CurrentUserService currentUserService; // Inject CurrentUserService
 
     @Override
     public GoalResponse createGoal(CreateGoalRequest request) {
 
-        User user = getUser();
+        User user = currentUserService.getCurrentUser(); // Use CurrentUserService
 
         Goal goal = Goal.builder()
                 .title(request.getTitle())
@@ -41,7 +45,7 @@ public class GoalServiceImpl implements GoalService {
     @Override
     public List<GoalResponse> getGoals() {
 
-        User user = getUser();
+        User user = currentUserService.getCurrentUser(); // Use CurrentUserService
 
         return goalRepository.findByUser(user)
                 .stream()
@@ -51,9 +55,15 @@ public class GoalServiceImpl implements GoalService {
 
     @Override
     public GoalResponse updateGoal(Long id, CreateGoalRequest request) {
+        User currentUser = currentUserService.getCurrentUser(); // Use CurrentUserService
 
         Goal goal = goalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Goal not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
+
+        // Check ownership
+        if (!goal.getUser().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("You are not authorized to update this goal.");
+        }
 
         goal.setTitle(request.getTitle());
         goal.setDescription(request.getDescription());
@@ -66,15 +76,30 @@ public class GoalServiceImpl implements GoalService {
 
     @Override
     public void deleteGoal(Long id) {
+        User currentUser = currentUserService.getCurrentUser(); // Use CurrentUserService
+
+        Goal goal = goalRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
+
+        // Check ownership
+        if (!goal.getUser().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("You are not authorized to delete this goal.");
+        }
 
         goalRepository.deleteById(id);
     }
 
     @Override
     public GoalResponse toggleGoalCompletion(Long id) {
+        User currentUser = currentUserService.getCurrentUser(); // Use CurrentUserService
 
         Goal goal = goalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Goal not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
+
+        // Check ownership
+        if (!goal.getUser().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("You are not authorized to toggle completion for this goal.");
+        }
 
         goal.setCompleted(!goal.getCompleted());
 
@@ -90,17 +115,7 @@ public class GoalServiceImpl implements GoalService {
                 .title(goal.getTitle())
                 .description(goal.getDescription())
                 .completed(goal.getCompleted())
-                .createdAt(LocalDateTime.now())
+                .createdAt(goal.getCreatedAt())
                 .build();
-    }
-
-    private User getUser() {
-
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

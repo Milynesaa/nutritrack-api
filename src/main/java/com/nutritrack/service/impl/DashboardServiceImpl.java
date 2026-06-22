@@ -4,18 +4,20 @@ import com.nutritrack.dto.response.DashboardResponse;
 import com.nutritrack.entity.Habit;
 import com.nutritrack.entity.Meal;
 import com.nutritrack.entity.User;
+import com.nutritrack.exception.ResourceNotFoundException;
 import com.nutritrack.repository.HabitRepository;
 import com.nutritrack.repository.MealRepository;
 import com.nutritrack.repository.UserRepository;
 import com.nutritrack.service.interfaces.DashboardService;
-import com.nutritrack.util.LogUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
@@ -23,8 +25,6 @@ public class DashboardServiceImpl implements DashboardService {
     private final UserRepository userRepository;
     private final MealRepository mealRepository;
     private final HabitRepository habitRepository;
-    
-    private static final org.slf4j.Logger log = LogUtil.getLogger(DashboardServiceImpl.class);
 
     @Override
     public DashboardResponse getUserDashboard(String email) {
@@ -33,7 +33,7 @@ public class DashboardServiceImpl implements DashboardService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     log.error("User not found with email: {}", email);
-                    return new RuntimeException("User not found");
+                    return new ResourceNotFoundException("User not found with email: " + email);
                 });
 
         List<Meal> meals = mealRepository.findByUser(user);

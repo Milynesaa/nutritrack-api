@@ -12,4 +12,6 @@ public interface PatientNutritionistRepository extends JpaRepository<PatientNutr
     List<PatientNutritionist> findByNutritionist(User nutritionist);
 
     Optional<PatientNutritionist> findByPatient(User patient);
+
+    Optional<PatientNutritionist> findByNutritionistAndPatient(User nutritionist, User patient); // Added this method
 }

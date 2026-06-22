@@ -17,5 +17,6 @@ public class RegisterRequest {
     @Size(min = 6)
     private String password;
 
+    @NotNull(message = "Role is required") // Added validation
     private Role role;
 }
