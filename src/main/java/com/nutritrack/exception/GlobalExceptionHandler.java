@@ -1,14 +1,17 @@
 package com.nutritrack.exception;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.nutritrack.dto.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -89,6 +92,46 @@ public class GlobalExceptionHandler {
                                 .success(false)
                                 .message("Authentication failed")
                                 .status(401)
+                                .timestamp(LocalDateTime.now())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        log.warn("Validation failed: {}", ex.getMessage());
+
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                .collect(Collectors.joining("; "));
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(
+                        ErrorResponse.builder()
+                                .success(false)
+                                .message(message)
+                                .status(400)
+                                .timestamp(LocalDateTime.now())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler(InvalidFormatException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidFormat(InvalidFormatException ex) {
+        log.warn("Invalid format: {}", ex.getMessage());
+
+        String message = "Invalid format for field: " + ex.getPath().stream()
+                .map(p -> p.getFieldName())
+                .collect(Collectors.joining("."));
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(
+                        ErrorResponse.builder()
+                                .success(false)
+                                .message(message)
+                                .status(400)
                                 .timestamp(LocalDateTime.now())
                                 .build()
                 );
