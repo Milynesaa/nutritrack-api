@@ -201,9 +201,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Transactional
     private String createRefreshToken(User user) {
-        // Invalidate existing refresh tokens for the user
-        refreshTokenRepository.deleteByUser(user);
+        // Try to find existing refresh token for the user and update it to avoid duplicate key errors
+        Optional<RefreshToken> existing = refreshTokenRepository.findByUser(user);
+        if (existing.isPresent()) {
+            RefreshToken refreshToken = existing.get();
+            refreshToken.setToken(UUID.randomUUID().toString());
+            refreshToken.setExpiryDate(Instant.now().plusMillis(604800000L)); // 7 days
+            refreshTokenRepository.save(refreshToken);
+            return refreshToken.getToken();
+        }
 
+        // Otherwise, create a new one
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setToken(UUID.randomUUID().toString());
